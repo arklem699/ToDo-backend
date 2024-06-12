@@ -1,7 +1,8 @@
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from app.models import ToDo, User, Status
@@ -67,6 +68,7 @@ def login(request, format=None):
         'refresh': str(refresh),
         'access': str(refresh.access_token),
         'username': user.username,
+        'id': user.id,
     }, status=status.HTTP_200_OK)
 
 
@@ -90,23 +92,27 @@ def logout(request, format=None):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_list_todo(request, format=None):
     """
     Возвращает список дел по запросу
     """
-    todos = ToDo.objects.all()
+    user = request.user
+    todos = ToDo.objects.filter(user_id=user)
     serializer = ToDoSerializer(todos, many=True)
     return Response(serializer.data)
 
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def post_todo(request, format=None):
     """
     Добавляет дело по запросу
     """
+    user_id = request.user.id
     todo = ToDo.objects.create(
         text = request.data.get('text'),
-        user_id = User.objects.get(id=2),
+        user_id = User.objects.get(id=user_id),
         status_id = Status.objects.get(id=1),
         date_completion = date.today()
     )
@@ -116,32 +122,47 @@ def post_todo(request, format=None):
 
 
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def delete_todo(request, id, format=None):
     """
     Удаляет дело по запросу
     """
+    user = request.user
     todo = get_object_or_404(ToDo, id=id)
-    todo.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
+    if todo.user_id == user:
+        todo.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    else:
+        return Response({'detail': 'У вас нет прав на удаление этого дела'}, status=status.HTTP_403_FORBIDDEN)
 
 
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def put_status_todo(request, id, format=None):
     """
     Обновляет статус дела по запросу
     """
+    user = request.user
     todo = get_object_or_404(ToDo, id=id)
-    todo.status_id = Status.objects.get(id=2)
-    todo.save()
-    return Response(status=status.HTTP_200_OK)
+    if todo.user_id == user:
+        todo.status_id = Status.objects.get(id=2)
+        todo.save()
+        return Response(status=status.HTTP_200_OK)
+    else:
+        return Response({'detail': 'У вас нет прав на изменение этого дела'}, status=status.HTTP_403_FORBIDDEN)
 
 
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def put_text_todo(request, id, format=None):
     """
     Обновляет текст дела по запросу
     """
+    user = request.user
     todo = get_object_or_404(ToDo, id=id)
-    todo.text = request.data.get('text')
-    todo.save()
-    return Response(status=status.HTTP_200_OK)
+    if todo.user_id == user:
+        todo.text = request.data.get('text')
+        todo.save()
+        return Response(status=status.HTTP_200_OK)
+    else:
+        return Response({'detail': 'У вас нет прав на изменение этого дела'}, status=status.HTTP_403_FORBIDDEN)
