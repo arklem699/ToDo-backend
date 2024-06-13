@@ -7,7 +7,6 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from app.models import ToDo, User, Status
 from app.serializers import ToDoSerializer, UserSerializer
-from datetime import date
 
 
 @api_view(['POST'])
@@ -114,7 +113,7 @@ def post_todo(request, format=None):
         text = request.data.get('text'),
         user_id = User.objects.get(id=user_id),
         status_id = Status.objects.get(id=1),
-        date_completion = date.today()
+        date_completion = request.data.get('date')
     )
     todo.save()
     serializer = ToDoSerializer(todo)
