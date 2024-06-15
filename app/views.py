@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from app.models import ToDo, User, Status
 from app.serializers import ToDoSerializer, UserSerializer
+import datetime
 
 
 @api_view(['POST'])
@@ -109,11 +110,15 @@ def post_todo(request, format=None):
     Добавляет дело по запросу
     """
     user_id = request.user.id
+    date_completion = request.data.get('date')
+    if date_completion is None:
+        date_completion = datetime.date.today()
+
     todo = ToDo.objects.create(
         text = request.data.get('text'),
         user_id = User.objects.get(id=user_id),
         status_id = Status.objects.get(id=1),
-        date_completion = request.data.get('date')
+        date_completion = date_completion
     )
     todo.save()
     serializer = ToDoSerializer(todo)
