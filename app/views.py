@@ -165,3 +165,19 @@ def put_text_todo(request, id, format=None):
         return Response(status=status.HTTP_200_OK)
     else:
         return Response({'detail': 'У вас нет прав на изменение этого дела'}, status=status.HTTP_403_FORBIDDEN)
+    
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def put_date_todo(request, id, format=None):
+    """
+    Обновляет дату дела по запросу
+    """
+    user = request.user
+    todo = get_object_or_404(ToDo, id=id)
+    if todo.user_id == user:
+        todo.date_completion = request.data.get('date')
+        todo.save()
+        return Response(status=status.HTTP_200_OK)
+    else:
+        return Response({'detail': 'У вас нет прав на изменение этого дела'}, status=status.HTTP_403_FORBIDDEN)

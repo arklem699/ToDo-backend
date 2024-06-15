@@ -16,6 +16,7 @@ urlpatterns = [
     path('api/todo/delete/<int:id>/', views.delete_todo, name='todo-delete'),
     path('api/todo/put/status/<int:id>/', views.put_status_todo, name='todo-put-status'),
     path('api/todo/put/text/<int:id>/', views.put_text_todo, name='todo-put-text'),
+    path('api/todo/put/date/<int:id>/', views.put_date_todo, name='todo-put-date'),
 
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
